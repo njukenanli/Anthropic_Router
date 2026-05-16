@@ -1,6 +1,8 @@
 # Anthropic_Router
 
-enable running claude code with any llm provider by routing all claude code lm api traffic via litellm.
+enable running claude code with any LLM provider by routing all claude code LM api traffic via litellm.
+
+suitable for cli vibe coding / batch run for LM benchmarking
 
 compatible on windows host (claude code seems have problems in windows container hmmm...)
 
@@ -37,12 +39,12 @@ claude # or `claude -p "user prompt"` to do a task at backend
 
 ## One important caveat: rule of CLI agent
 
-The submit/stop/exit rule of CLI agent like codex / claude code / gemini-cli is that lm outputs one pure-text response without tool call. Many lms especially open-source ones have not been trained on such submission rule of CLI agent, so they may either
+The submit/stop/exit rule of CLI agent like codex / claude code / gemini-cli is that LM outputs one pure-text response without tool call. Many LMs especially open-source ones have not been trained on such submission rule of CLI agent, so they may either
  
-1. do not know how to stop the agent, after the lm finishes the task, it started to send meaningless tool calls...
+1. do not know how to stop the agent, after the LM finishes the task, it started to send meaningless tool calls...
 2. stop the agent early unintentionally because it forget to generate a tool call in one response / or its generated tool call has JSON decode error and is thus parsed as pure text.
 
-For cli vibe coding users it should be tried which lm can use claude code normally and which cannot.
+For cli vibe coding users it should be tried which LM can use claude code normally and which cannot.
 
-For benchmaking lm agents with claude code, researchers can typically install a standalone claude code in the container of a task instance. However, it should be noted that LMs that cannot handle claude code normally (for the two reasons above) may result in very low success rate.
+For benchmaking LM agents with claude code, researchers can typically install a standalone claude code in the container of a task instance. However, it should be noted that LMs that cannot handle claude code normally (for the two reasons above) may result in very low success rate.
 
