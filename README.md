@@ -12,18 +12,18 @@ compatible on windows host (claude code seems have problems in windows container
 pip install -r requirements.txt
 ```
 
-```python
-from server import Server
-server = Server()
-base_url, token = server.start_from_api_key(
-    model = "openrouter/openai/gpt-5.5", # model should be in litellm model name format
-    base_url = "https://openrouter.ai/api/v1",
-    api_key = "your api key",
-    # put other arguments you need here...
-)
-# for azure openai user please use the method server.start_from_azure_openai()
-print(base_url, token, sep = " ; ")
-# example result: http://10.190.175.111:54657 ; dummy
+prepare configs in config/{...}.yaml
+
+for azure openai user you need to implement the script to get azure_ad_token_provider yourself and import it in server.py::Server::start_from_azure_openai
+
+```bash
+python server.py --config config/{...}.yaml
+
+[Out]:
+Claude Code server started...
+ANTHROPIC_BASE_URL=http://localhost:35421
+ANTHROPIC_AUTH_TOKEN=dummy 
+If want to stop just type Ctrl^C 
 ```
 
 ```bash
@@ -32,7 +32,7 @@ alias claude="$HOME/.local/bin/claude"
 
 # on windows cmd: curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd 2.1.89 && del install.cmd
 
-export ANTHROPIC_BASE_URL=http://10.190.175.111:54657 # the base url you got from the above python script
+export ANTHROPIC_BASE_URL=http://localhost:35421 # the base url you got from the above python script
 export ANTHROPIC_AUTH_TOKEN=dummy # the token you got from the above python script
 claude # or `claude -p "user prompt"` to do a task at backend
 ```

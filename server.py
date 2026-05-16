@@ -22,13 +22,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 # Silence LiteLLM's "Provider List: https://…" debug print that accompanies
 # provider-detection errors.
 litellm.suppress_debug_info = True
-
+litellm.drop_params=True
 
 logger = logging.getLogger(__name__)
-
-SONNET_MODEL = "claude-sonnet-4-5-20250929"
-HAIKU_MODEL = "claude-haiku-4-5-20251001"
-
 
 def _pick_unused_port() -> int:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,7 +52,7 @@ class Server:
 
     stopped: bool
 
-    def __init__(self) -> None:
+    def __init__(self, sonnet_model: str, haiku_model: str) -> None:
         self.stopped = True
         self._app: FastAPI | None = None
         self._server: uvicorn.Server | None = None
@@ -65,6 +61,8 @@ class Server:
         self._auth_token: str = "dummy"
         self._model_aliases: dict[str, str] = {}
         self._litellm_params: dict[str, Any] = {}
+        self.sonnet_model=sonnet_model
+        self.haiku_model=haiku_model
 
     def start(self, **kwargs: Any) -> tuple[str, str]:
         """Start a minimal Anthropic-compatible LiteLLM SDK server.
@@ -85,8 +83,8 @@ class Server:
 
         sonnet_model = kwargs.pop("sonnet_model", kwargs.pop("model_high", model))
         haiku_model = kwargs.pop("haiku_model", kwargs.pop("model_low", model))
-        sonnet_name = kwargs.pop("sonnet_name", kwargs.pop("frontend_model_high", SONNET_MODEL))
-        haiku_name = kwargs.pop("haiku_name", kwargs.pop("frontend_model_low", HAIKU_MODEL))
+        sonnet_name = kwargs.pop("sonnet_name", kwargs.pop("frontend_model_high", self.sonnet_model))
+        haiku_name = kwargs.pop("haiku_name", kwargs.pop("frontend_model_low", self.haiku_model))
         model_aliases = kwargs.pop("model_aliases", None)
 
         api_base = kwargs.pop("api_base", kwargs.pop("base_url", None))
@@ -122,13 +120,11 @@ class Server:
     def start_from_azure_openai(self, model: str, **kwargs: Any) -> tuple[str, str]:
         """Start from the CloudGPT Azure OpenAI endpoint used by the existing runner."""
         raise NotImplementedError("For azure openai indentity token login, you should prepare the script to get azure openai token provider yourself")
-        from "your python script to get azure openai token provider" import get_openai_token_provider
+        from "your script to get azure_ad_token_provider" import get_openai_token_provider
 
         token_provider = get_openai_token_provider()
         return self.start(
             model=model,
-            api_base="https://<your user name>.azure-api.net/",
-            api_version="2025-04-01-preview",
             azure_ad_token_provider=token_provider,
             **kwargs,
         )
@@ -284,3 +280,31 @@ class Server:
             self.stop()
         except Exception:
             pass
+
+
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+    import yaml
+    parser = ArgumentParser()
+    parser.add_argument("--config", help="config yaml file path", required=True)
+    args = parser.parse_args()
+    with open(args.config) as f:
+        config = yaml.safe_load(f)
+    
+    assert config.get("claude_model", False)
+    assert config.get("provider_model", False)
+    assert config["provider_model"].get("model")
+    
+    server = Server(config["claude_model"]["sonnet"], config["claude_model"]["haiku"])
+    model = config["provider_model"]["model"]
+    if "azure" in model:
+        url, token = server.start_from_azure_openai(**config["provider_model"])
+    else:
+        assert config["provider_model"].get("api_key", False)
+        url, token = server.start_from_api_key(**config["provider_model"])
+    print("Claude Code server started...")
+    print(f"ANTHROPIC_BASE_URL={url}")
+    print(f"ANTHROPIC_AUTH_TOKEN={token}")
+    print("If want to stop just type Ctrl^C")
+    while True:
+        time.sleep(120)

@@ -1,0 +1,11 @@
+claude_model:
+  sonnet: claude-sonnet-4-5-20250929  # for claude code version 2.0.65
+  haiku: claude-haiku-4-5-20251001    # for claude code version 2.0.65
+
+provider_model:
+  model: openrouter/openai/gpt-5.5
+  base_url: https://openrouter.ai/api/v1
+  api_key: your_api_key
+  reasoning:
+    effort: high
+  # put other litellm model arguments here
