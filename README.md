@@ -2,6 +2,8 @@
 
 enable running claude code with any llm provider by routing all claude code lm api traffic via litellm.
 
+compatible on windows host (claude code seems have problems in windows container hmmm...)
+
 ## Quick start
 
 ```bash
