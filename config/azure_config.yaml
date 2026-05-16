@@ -6,7 +6,6 @@ provider_model:
   model: azure/gpt-5.5-20260424
   api_base: https://<your_azure_oprnai_username>.azure-api.net/
   api_version: 2025-04-01-preview
-  reasoning:
-    effort: xhigh
+  reasoning_effort: xhigh
   # azure openai uses dynamic identity token, implement the script to get azure_ad_token_provider your self and put import it in server.py::Server::start_from_azure_openai
   # also put other litellm model arguments here
