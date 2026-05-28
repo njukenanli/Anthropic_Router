@@ -12,12 +12,20 @@ compatible on windows host (claude code seems have problems in windows container
 pip install -r requirements.txt
 ```
 
-prepare configs in config/{...}.yaml
+Prepare configs in config/{...}.yaml
 
-for azure openai user you need to implement the script to get azure_ad_token_provider yourself and import it in server.py::Server::start_from_azure_openai
+For azure openai user you need to implement the script to get azure_ad_token_provider yourself and import it in server.py::Server::start_from_azure_openai
+
+Set `server.port` and `server.token` in config, or override them with `--port` and `--token`. If you don't specify them, a random unused port and token=dummy will be picked.
+
+```yaml
+server:
+  port: 35421  # omit or set 0 to pick a random unused port
+  token: dummy # token for ANTHROPIC_AUTH_TOKEN
+```
 
 ```bash
-python server.py --config config/{...}.yaml
+python main.py --config config/{...}.yaml --port 35421 --token dummy
 
 [Out]:
 Claude Code server started...
@@ -47,4 +55,3 @@ The submit/stop/exit rule of CLI agent like codex / claude code / gemini-cli is 
 For cli vibe coding users it should be tried which LM can use claude code normally and which cannot.
 
 For benchmaking LM agents with claude code, researchers can typically install a standalone claude code in the container of a task instance. However, it should be noted that LMs that cannot handle claude code normally (for the two reasons above) may result in very low success rate.
-

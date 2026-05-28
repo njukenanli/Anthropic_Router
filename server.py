@@ -6,6 +6,7 @@ import threading
 import time
 import warnings
 from collections.abc import AsyncIterator
+from contextlib import suppress
 from typing import Any, NoReturn
 
 # LiteLLM's internal ModelResponse/StreamingChoices schemas don't always match
@@ -119,8 +120,8 @@ class Server:
 
     def start_from_azure_openai(self, model: str, **kwargs: Any) -> tuple[str, str]:
         """Start from the CloudGPT Azure OpenAI endpoint used by the existing runner."""
-        raise NotImplementedError("For azure openai indentity token login, you should prepare the script to get azure openai token provider yourself")
-        from "your script to get azure_ad_token_provider" import get_openai_token_provider
+        #raise NotImplementedError("For azure openai indentity token login, you should prepare the script to get azure openai token provider yourself")
+        #from <your_script> import get_openai_token_provider
 
         token_provider = get_openai_token_provider()
         return self.start(
@@ -218,8 +219,17 @@ class Server:
                     continue
 
                 data = self._to_jsonable(chunk)
+                if self._is_empty_stream_choice(data):
+                    continue
+
                 event_type = data.get("type", "message") if isinstance(data, dict) else "message"
                 yield f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+        except (BrokenPipeError, ConnectionResetError, asyncio.CancelledError):
+            raise
+        except IndexError as exc:
+            if not self._is_litellm_empty_choices_error(exc):
+                raise
+            yield f"event: message_stop\ndata: {json.dumps({'type': 'message_stop'})}\n\n"
         except Exception as exc:
             # Emit an Anthropic-style error event followed by a terminal message_stop
             # so Claude Code closes the stream cleanly instead of hanging.
@@ -227,6 +237,27 @@ class Server:
             error_payload = self._anthropic_error_payload(exc)
             yield f"event: error\ndata: {json.dumps(error_payload)}\n\n"
             yield f"event: message_stop\ndata: {json.dumps({'type': 'message_stop'})}\n\n"
+        finally:
+            await self._close_stream(response)
+
+    @staticmethod
+    def _is_empty_stream_choice(data: Any) -> bool:
+        return isinstance(data, dict) and data.get("choices") == []
+
+    @staticmethod
+    def _is_litellm_empty_choices_error(exc: IndexError) -> bool:
+        return str(exc) == "list index out of range"
+
+    async def _close_stream(self, response: Any) -> None:
+        with suppress(Exception):
+            aclose = getattr(response, "aclose", None)
+            if aclose is not None:
+                await aclose()
+                return
+
+            completion_stream = getattr(response, "completion_stream", None)
+            if completion_stream is not None:
+                await self._close_stream(completion_stream)
 
     def _wait_until_ready(self, host: str, port: int, startup_timeout: float) -> None:
         connect_host = "127.0.0.1" if host in ("0.0.0.0", "::") else host
@@ -280,31 +311,3 @@ class Server:
             self.stop()
         except Exception:
             pass
-
-
-if __name__ == "__main__":
-    from argparse import ArgumentParser
-    import yaml
-    parser = ArgumentParser()
-    parser.add_argument("--config", help="config yaml file path", required=True)
-    args = parser.parse_args()
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
-    
-    assert config.get("claude_model", False)
-    assert config.get("provider_model", False)
-    assert config["provider_model"].get("model")
-    
-    server = Server(config["claude_model"]["sonnet"], config["claude_model"]["haiku"])
-    model = config["provider_model"]["model"]
-    if "azure" in model:
-        url, token = server.start_from_azure_openai(**config["provider_model"])
-    else:
-        assert config["provider_model"].get("api_key", False)
-        url, token = server.start_from_api_key(**config["provider_model"])
-    print("Claude Code server started...")
-    print(f"ANTHROPIC_BASE_URL={url}")
-    print(f"ANTHROPIC_AUTH_TOKEN={token}")
-    print("If want to stop just type Ctrl^C")
-    while True:
-        time.sleep(120)

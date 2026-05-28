@@ -2,11 +2,14 @@ claude_model:
   sonnet: claude-sonnet-4-6           # for claude code version 2.1.89
   haiku: claude-haiku-4-5-20251001    # for claude code version 2.1.89
 
+server: # optional, if you don't provide this field random port and token will be provided.
+  port: 35421  # omit or set 0 to pick a random unused port
+  token: dummy # token for ANTHROPIC_AUTH_TOKEN
+
 provider_model:
-  model: azure/gpt-5.5-20260424
+  model: azure/gpt-5.5-20260424  # follow the model name format of litellm
   api_base: https://<your_azure_oprnai_username>.azure-api.net/
   api_version: 2025-04-01-preview
-  reasoning:
-    effort: xhigh
+  reasoning_effort: xhigh
   # azure openai uses dynamic identity token, implement the script to get azure_ad_token_provider your self and put import it in server.py::Server::start_from_azure_openai
   # also put other litellm model arguments here
