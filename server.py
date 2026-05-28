@@ -53,7 +53,10 @@ class Server:
 
     stopped: bool
 
-    def __init__(self, sonnet_model: str, haiku_model: str) -> None:
+    def __init__(self, 
+                 sonnet_model: str = "claude-sonnet-4-5-20250929", 
+                 haiku_model: str = "claude-haiku-4-5-20251001"
+                ) -> None:
         self.stopped = True
         self._app: FastAPI | None = None
         self._server: uvicorn.Server | None = None
