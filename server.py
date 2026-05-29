@@ -54,7 +54,7 @@ class Server:
     stopped: bool
 
     def __init__(self, 
-                 sonnet_model: str = "claude-sonnet-4-5-20250929", 
+                 sonnet_model: str = "claude-sonnet-4-6", 
                  haiku_model: str = "claude-haiku-4-5-20251001"
                 ) -> None:
         self.stopped = True
@@ -123,7 +123,7 @@ class Server:
 
     def start_from_azure_openai(self, model: str, **kwargs: Any) -> tuple[str, str]:
         """Start from the CloudGPT Azure OpenAI endpoint used by the existing runner."""
-        #raise NotImplementedError("For azure openai indentity token login, you should prepare the script to get azure openai token provider yourself")
+        raise NotImplementedError("For azure openai indentity token login, you should prepare the script to get azure openai token provider yourself")
         #from <your_script> import get_openai_token_provider
 
         token_provider = get_openai_token_provider()

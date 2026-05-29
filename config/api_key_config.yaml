@@ -1,6 +1,6 @@
 claude_model:
-  sonnet: claude-sonnet-4-5-20250929  # for claude code version 2.0.65
-  haiku: claude-haiku-4-5-20251001    # for claude code version 2.0.65
+  sonnet: claude-sonnet-4-6           # for claude code version 2.1.89
+  haiku: claude-haiku-4-5-20251001    # for claude code version 2.1.89
 
 server: # optional, if you don't provide this field random port and token will be provided.
   port: 35421  # omit or set 0 to pick a random unused port
